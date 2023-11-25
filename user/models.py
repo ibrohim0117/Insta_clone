@@ -55,6 +55,14 @@ class User(AbstractUser, BaseModel):
     def __str__(self):
         return self.username
 
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+    def create_verify_code(self, verify_type):
+        code = "".join([str(random.randint(0, 100) % 10) for _ in range(4)])
+        UserConfirmation.objects.create(user_id=self.id, verify_type=verify_type, code=code)
+        return code
 
 
 class UserConfirmation(BaseModel):
