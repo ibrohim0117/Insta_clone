@@ -55,55 +55,6 @@ class User(AbstractUser, BaseModel):
     def __str__(self):
         return self.username
 
-    @property
-    def full_name(self):
-        return f"{self.first_name}  {self.last_name}"
-
-    def create_verify_code(self, verify_type):    # tekshirish kodini yaratish
-        code = "".join([str(random.randint(1, 100) % 10) for _ in range(4)])
-        UserConfirmation.objects.create(
-            user_id=self.id,
-            verify_type=verify_type,
-            code=code
-        )
-        return code
-
-    def check_username(self):    # username yaratish
-        if not self.username:
-            temp_username = f"instagram-{uuid.uuid4().__str__().split('-')[-1]}"
-            self.username = temp_username
-
-    def check_email(self):    # email yaratish
-        if self.email:
-            normalize_email = self.email.lower()
-            self.email = normalize_email
-
-    def check_pass(self):     # passwor yaratish
-        if not self.password:
-            temp_password = f"password-{uuid.uuid4().__str__().split('-')[-1]}"
-            self.password = temp_password
-
-    def hashing_password(self):   # tayyor passwordni heshlash
-        if not self.password.startswith('pbkdf2_sha256'):
-            self.set_password(self.password)
-
-    def token(self):     # user un token yaratish
-        refresh = RefreshToken.for_user(self)
-        return {
-            "access": str(refresh.access_token),
-            "refresh_token": str(refresh)
-        }
-
-    def clean(self):
-        self.check_email()
-        self.check_username()
-        self.check_pass()
-        self.hashing_password()
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.clean()
-        super(User, self).save(*args, **kwargs)
 
 
 class UserConfirmation(BaseModel):
@@ -121,7 +72,7 @@ class UserConfirmation(BaseModel):
     def __str__(self):
         return str(self.user.__str__())
 
-    def save(self, *args, **kwargs):    # kod keish vaqtini saqlash metodi
+    def save(self, *args, **kwargs):
         if not self.pk:
             if self.verify_type == VIA_EMAIL:
                 self.expiration_time = datetime.now() + timedelta(minutes=EMAIL_EXPIRE)

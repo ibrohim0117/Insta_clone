@@ -23,4 +23,4 @@ def check_email_or_phone_num(email_or_phone):
     return email_or_phone
 
 
-print(check_email_or_phone_num('+998995882742'))
+# print(check_email_or_phone_num('+998995882742'))
