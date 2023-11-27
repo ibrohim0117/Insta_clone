@@ -13,54 +13,47 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(UserSignUpSerializer, self).__init__(*args, **kwargs)
-        self.fields['email_or_phone_number'] = serializers.CharField(required=False)
+        self.fields['email_phone_number'] = serializers.CharField(required=False)
 
     class Meta:
         model = User
-        fields = (
-            'id',
-            'auth_type',
-            'auth_status'
-        )
-
-    def validate(self, data):
-        super(UserSignUpSerializer, self).validate(data)
-        data = self.auth_validate(data)
-        return data
-
+        fields = ('id', 'auth_type', 'auth_status')
+        
     def create(self, validated_data):
         user = super(UserSignUpSerializer, self).create(validated_data)
         if user.auth_type == VIA_EMAIL:
             code = user.create_verify_code(VIA_EMAIL)
-            # send_email(user.email, code)
+            print(code)
         elif user.auth_type == VIA_PHONE:
             code = user.create_verify_code(VIA_PHONE)
-            # send_phone(user.phone_number, code)
+            print(code)
         user.save()
 
+    def validate(self, attrs):
+        super(UserSignUpSerializer, self).validate(attrs)
+        data = self.auth_validate(attrs)
+        return data
+
     @staticmethod
-    def auth_validate(data):
-        user_input = str(data.get('email_or_phone_number')).lower()   # userdan kelgan ma'lumotni oldik
+    def auth_validate(attrs):
+        user_input = str(attrs.get('email_phone_number')).lower()
         input_type = check_email_or_phone_num(user_input)
-        # print("user_input", user_input)
-        # print("input_type", input_type)
+        print(input_type, user_input)
         if input_type == 'email':
             data = {
-                'success': True,
                 'email': user_input,
                 'auth_type': VIA_EMAIL
             }
         elif input_type == 'phone':
             data = {
-                'success': True,
-                'phone': user_input,
+                'phone_number': user_input,
                 'auth_type': VIA_PHONE
             }
         else:
             data = {
                 'success': False,
-                'message': "Invalid email or phone number"
+                'message': 'Telefon raqam yoki email kiritishingiz kerak!'
             }
             raise ValidationError(data)
-        print(data)
+
         return data
