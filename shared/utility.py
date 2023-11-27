@@ -43,7 +43,7 @@ class Email:
         email = EmailMessage(
             subject=data['subject'],
             body=data['body'],
-            to=data['to']
+            to=[data['to_email']]
         )
         if data.get('content_type') == 'html':
             email.content_subtype = 'html'

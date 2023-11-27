@@ -2,5 +2,10 @@ from django.contrib import admin
 
 from user.models import User, UserConfirmation
 
-admin.site.register(User)
+
+class UserModelAdmin(admin.ModelAdmin):
+    list_display = ['id', 'email', 'phone_number']
+
+
+admin.site.register(User, UserModelAdmin)
 admin.site.register(UserConfirmation)

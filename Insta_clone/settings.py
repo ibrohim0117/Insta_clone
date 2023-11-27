@@ -1,5 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
+
+import django.core.mail.backends.base
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -174,3 +176,5 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

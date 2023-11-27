@@ -28,6 +28,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             code = user.create_verify_code(VIA_PHONE)
             print(code)
         user.save()
+        return user
 
     def validate(self, attrs):
         super(UserSignUpSerializer, self).validate(attrs)
@@ -57,3 +58,29 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             raise ValidationError(data)
 
         return data
+
+    def validate_email_phone_number(self, value):
+        value = value.lower()
+        if value and User.objects.filter(email=value).exists():
+            data = {
+                'success': False,
+                'message': 'Bu emaildan oldin foydalanilgan!'
+            }
+            raise ValidationError(data)
+
+        elif value and User.objects.filter(phone_number=value).exists():
+            data = {
+                'success': False,
+                'message': 'Bu telefon raqamdan oldin foydalanilgan!'
+            }
+            raise ValidationError(data)
+
+        return value
+
+    def to_representation(self, instance):
+        data = super(UserSignUpSerializer, self).to_representation(instance)
+        data.update(instance.token())
+
+        return data
+
+
