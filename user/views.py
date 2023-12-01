@@ -3,10 +3,11 @@ from datetime import datetime
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import UserSignUpSerializer
-from .models import User, DONE, CODE_VERIFIED
+from .models import User, DONE, CODE_VERIFIED, NEW
 
 
 class CreateUserView(CreateAPIView):
@@ -23,6 +24,14 @@ class VerifyApiView(APIView):
         code = self.request.data.get('code')
 
         self.check_verify(user, code)
+        return Response(
+            data={
+                'success': True,
+                'auth_status': user.auth_status,
+                'access': user.token()['access'],
+                'refresh': user.token()['refresh']
+            }
+        )
 
     @staticmethod
     def check_verify(user, code):
@@ -33,7 +42,7 @@ class VerifyApiView(APIView):
             }
             raise ValidationError(data)
         verifies.update(is_confirmed=True)
-        if user.auth_status not in DONE:
+        if user.auth_status == NEW:
             user.auth_status = CODE_VERIFIED
             user.save()
         return True
