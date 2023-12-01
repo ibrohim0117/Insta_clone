@@ -36,7 +36,10 @@ INSTALLED_APPS = [
     # install_apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'rest_framework.authtoken',
     'drf_yasg',
+    'twilio',
 ]
 
 MIDDLEWARE = [

@@ -83,3 +83,9 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         return data
 
 
+class VerifyCodeSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=4, write_only=True)
+
+
+
+
