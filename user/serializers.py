@@ -59,7 +59,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
         return data
 
-    def validate_email_phone_number(self, value):
+    def validate_email_phone_number(self, value):  # noqa
         value = value.lower()
         if value and User.objects.filter(email=value).exists():
             data = {
@@ -80,7 +80,6 @@ class UserSignUpSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super(UserSignUpSerializer, self).to_representation(instance)
         data.update(instance.token())
-
         return data
 
 
