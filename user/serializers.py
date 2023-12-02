@@ -83,7 +83,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         return data
 
 
-class VerifyCodeSerializer(serializers.Serializer):
+class VerifyCodeSerializer(serializers.Serializer):       # noqa
     code = serializers.CharField(max_length=4, write_only=True)
 
 
