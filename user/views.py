@@ -6,9 +6,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from shared.utility import send_email
-from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto
+from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto, \
+    LoginSerializer
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -124,7 +126,7 @@ class ChangeUserInformationView(generics.UpdateAPIView):
 
 
 class ChangeUserPhotoView(APIView):
-    # permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated, )
 
     @swagger_auto_schema(
         request_body=ChangeUserPhoto,
@@ -143,6 +145,9 @@ class ChangeUserPhotoView(APIView):
         return Response(
             serializer.errors, status=400
         )
+
+class LoginView(TokenObtainPairView):     # noqa
+    serializer_class = LoginSerializer
 
 
 

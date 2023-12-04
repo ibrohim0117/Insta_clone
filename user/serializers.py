@@ -1,12 +1,14 @@
+from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import FileExtensionValidator
+from rest_framework_simplejwt.serializers import TokenObtainSerializer
 
-from shared.utility import check_email_or_phone_num, send_email
+from shared.utility import check_email_or_phone_num, send_email, check_user_type
 from .models import User, UserConfirmation, VIA_PHONE, VIA_EMAIL, NEW, CODE_VERIFIED, DONE, PHOTO_STEP
 from rest_framework import exceptions
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
@@ -178,6 +180,76 @@ class ChangeUserPhoto(serializers.Serializer):    # noqa
             instance.auth_status = PHOTO_STEP
             instance.save()
         return instance
+
+
+class LoginSerializer(TokenObtainSerializer):    # noqa
+
+    def __init__(self, *args, **kwargs):
+        super(LoginSerializer, self).__init__(*args, **kwargs)
+        self.fields['userinput'] = serializers.CharField(required=True)
+        self.fields['username'] = serializers.CharField(required=False, read_only=True)
+
+    def auth_validate(self, data):
+        user_input = data.get('userinput')
+        if check_user_type(user_input) == 'username':
+            username = user_input
+        elif check_user_type(user_input) == 'email':
+            user = self.get_user(email__exact=user_input)
+            username = user.username
+        elif check_user_type(user_input) == 'phone':
+            user = self.get_user(phone_number=user_input)
+            username = user.username
+        else:
+            data = {
+                'success': True,
+                'message': 'Siz email username yoki telefon raqami kiritishingiz kerak!'
+            }
+            raise ValidationError(data)
+
+        authentication_kwargs = {
+            self.username_field: username,
+            'password': data['password']
+        }
+
+        # user statusini tekshirish
+        current_user = User.objects.filter(username__iexact=username).first()
+        print(current_user)
+        if current_user is not None and current_user.auth_status in [NEW, CODE_VERIFIED]:
+            raise ValidationError(
+                {
+                    'success': False,
+                    'message': "Siz ro'yhatdan to'liq o'tmagansiz"
+                }
+            )
+        user = authenticate(**authentication_kwargs)
+        if user is not None:
+            self.user = user
+        else:
+            raise ValidationError(
+                {
+                    'success': False,
+                    'message': 'Uzur sizning kiritgan login parolingiz xato qaytadan urining!'
+                }
+            )
+
+    def validate(self, data):
+        self.auth_validate(data)
+        if self.user.auth_status not in [DONE, PHOTO_STEP]:
+            raise PermissionDenied("Siz login qilaolmaysiz ruxsatingiz yo'q")
+        data = self.user.token()
+        data['auth_status'] = self.user.auth_status
+        data['full_name'] = self.user.full_name
+        return data
+
+    def get_user(self, **kwargs):
+        users = User.objects.filter(**kwargs)
+        if not users.exists():
+            raise ValidationError(
+                {'message': 'Bunday user topilmadi!'}
+            )
+        return users.first()
+
+
 
 
 
