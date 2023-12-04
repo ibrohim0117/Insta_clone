@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from shared.utility import send_email
-from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation
+from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -121,6 +121,28 @@ class ChangeUserInformationView(generics.UpdateAPIView):
             'data': self.request.data
         }
         return Response(data, status=200)
+
+
+class ChangeUserPhotoView(APIView):
+    # permission_classes = (permissions.IsAuthenticated, )
+
+    @swagger_auto_schema(
+        request_body=ChangeUserPhoto,
+        responses={200: 'OK', 400: 'Bad Request'},
+    )
+    def put(self, request, *args, **kwargs):
+        serializer = ChangeUserPhoto(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            data = {
+                'success': True,
+                'message': "Rasm fuvofaqqiyatli uzgardi!"
+            }
+            return Response(data)
+        return Response(
+            serializer.errors, status=400
+        )
 
 
 

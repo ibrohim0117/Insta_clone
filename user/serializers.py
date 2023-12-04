@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import FileExtensionValidator
 
 from shared.utility import check_email_or_phone_num, send_email
 from .models import User, UserConfirmation, VIA_PHONE, VIA_EMAIL, NEW, CODE_VERIFIED, DONE, PHOTO_STEP
@@ -165,6 +166,19 @@ class ChangeUserInformation(serializers.Serializer):      # noqa
             instance.auth_status = DONE
         instance.save()
         return instance
+
+
+class ChangeUserPhoto(serializers.Serializer):    # noqa
+    photo = serializers.ImageField(validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'heic', 'heif'])])
+
+    def update(self, instance, validated_data):
+        photo = validated_data.get('photo')
+        if photo:
+            instance.photo = photo
+            instance.auth_status = PHOTO_STEP
+            instance.save()
+        return instance
+
 
 
 
