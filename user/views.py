@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions, status
+from rest_framework import permissions, status, generics
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from shared.utility import send_email
-from .serializers import UserSignUpSerializer, VerifyCodeSerializer
+from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -90,6 +90,38 @@ class GetNewVerification(APIView):
                 'message': 'Kodingiz hali ishlatish uchun yaroqli'
             }
             raise ValidationError(data)
+
+
+class ChangeUserInformationView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = ChangeUserInformation
+    permission_classes = (permissions.IsAuthenticated, )
+    http_method_names = ['patch', 'put']
+
+    def get_object(self):
+        print(self.request.user)
+        print(self.request.user.id)
+        return get_object_or_404(User, id=self.request.user.id)
+
+    def update(self, request, *args, **kwargs):
+        super(ChangeUserInformationView, self).update(request, *args, **kwargs)
+        data = {
+            'success': True,
+            'message': 'User update success',
+            'auth_status': self.request.user.auth_status
+        }
+        return Response(data, status=200)
+
+    def partial_update(self, request, *args, **kwargs):
+        super(ChangeUserInformationView, self).partial_update(request, *args, **kwargs)
+        data = {
+            'success': True,
+            'message': 'User update success',
+            'auth_status': self.request.user.auth_status,
+            'data': self.request.data
+        }
+        return Response(data, status=200)
+
 
 
 
