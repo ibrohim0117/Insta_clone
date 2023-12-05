@@ -1,7 +1,10 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import FileExtensionValidator
-from rest_framework_simplejwt.serializers import TokenObtainSerializer
+from rest_framework.generics import get_object_or_404
+from rest_framework_simplejwt.serializers import TokenObtainSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import AccessToken
 
 from shared.utility import check_email_or_phone_num, send_email, check_user_type
 from .models import User, UserConfirmation, VIA_PHONE, VIA_EMAIL, NEW, CODE_VERIFIED, DONE, PHOTO_STEP
@@ -248,6 +251,19 @@ class LoginSerializer(TokenObtainSerializer):    # noqa
                 {'message': 'Bunday user topilmadi!'}
             )
         return users.first()
+
+
+class LoginRefreshSerializer(TokenRefreshSerializer):   # noqa
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        access_token_instance = AccessToken(data['access'])
+        user_id = access_token_instance['user_id']
+        user = get_object_or_404(User, id=user_id)
+        update_last_login(None, user)
+        return data
+
+
 
 
 

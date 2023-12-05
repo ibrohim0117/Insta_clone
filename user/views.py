@@ -6,11 +6,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from shared.utility import send_email
 from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto, \
-    LoginSerializer
+    LoginSerializer, LoginRefreshSerializer
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -149,6 +149,9 @@ class ChangeUserPhotoView(APIView):
 class LoginView(TokenObtainPairView):     # noqa
     serializer_class = LoginSerializer
 
+
+class LoginRefreshView(TokenRefreshView):
+    serializer_class = LoginRefreshSerializer
 
 
 
