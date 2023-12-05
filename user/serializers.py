@@ -11,7 +11,7 @@ from .models import User, UserConfirmation, VIA_PHONE, VIA_EMAIL, NEW, CODE_VERI
 from rest_framework import exceptions
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
@@ -266,6 +266,25 @@ class LoginRefreshSerializer(TokenRefreshSerializer):   # noqa
 class LogOutSerializer(serializers.Serializer):   # noqa
     refresh = serializers.CharField()
 
+class ForgetPasswordSerializer(serializers.Serializer):  # noqa
+    email_or_phone = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        email_or_phone = attrs.get('email_or_phone', None)
+        if email_or_phone is None:
+            raise ValidationError(
+                {
+                    'success': False,
+                    'message': "Email yoki telefon raqam kiritilishi shart!"
+                }
+            )
+        user = User.objects.filter(Q(phone_number=email_or_phone) | Q(email=email_or_phone))
+        if not user.exists():
+            raise NotFound(detail="Bunday foydalanuvchi topilmadi!")
+
+        attrs['user'] = user.first()
+
+        return attrs
 
 
 

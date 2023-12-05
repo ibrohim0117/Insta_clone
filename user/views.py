@@ -10,9 +10,9 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from shared.utility import send_email
+from shared.utility import send_email, check_email_or_phone_num
 from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto, \
-    LoginSerializer, LoginRefreshSerializer, LogOutSerializer
+    LoginSerializer, LoginRefreshSerializer, LogOutSerializer, ForgetPasswordSerializer
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -179,6 +179,38 @@ class LogOutView(APIView):
             return Response(data, status=205)
         except TokenError:
             return Response(status=400)
+
+
+class ForgetPasswordView(APIView):
+    permission_classes = (permissions.AllowAny, )
+    serializer_classes = ForgetPasswordSerializer
+
+    @swagger_auto_schema(
+        request_body=ForgetPasswordSerializer,
+        responses={200: 'OK', 400: 'Bad Request'},
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_classes(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        email_or_phone = serializer.validated_data.get('email_or_phone')
+        user = serializer.validated_data.get('user')
+        if check_email_or_phone_num(email_or_phone) == 'phone':
+            code = user.create_verify_code(VIA_PHONE)
+            send_email(email_or_phone, code)
+        elif check_email_or_phone_num(email_or_phone) == 'email':
+            code = user.create_verify_code(VIA_EMAIL)
+            send_email(email_or_phone, code)
+
+        return Response(
+            {
+                'success': True,
+                'message': "User tasdiqlash codi yuborildi!",
+                'access': user.token()['access'],
+                'refresh': user.token()['refresh_token'],
+                'user_status': user.auth_status
+            },
+            status=200
+        )
 
 
 
