@@ -263,6 +263,10 @@ class LoginRefreshSerializer(TokenRefreshSerializer):   # noqa
         update_last_login(None, user)
         return data
 
+class LogOutSerializer(serializers.Serializer):   # noqa
+    refresh = serializers.CharField()
+
+
 
 
 
