@@ -266,6 +266,7 @@ class LoginRefreshSerializer(TokenRefreshSerializer):   # noqa
 class LogOutSerializer(serializers.Serializer):   # noqa
     refresh = serializers.CharField()
 
+
 class ForgetPasswordSerializer(serializers.Serializer):  # noqa
     email_or_phone = serializers.CharField(write_only=True, required=True)
 
@@ -285,6 +286,34 @@ class ForgetPasswordSerializer(serializers.Serializer):  # noqa
         attrs['user'] = user.first()
 
         return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):   # noqa
+    id = serializers.UUIDField(read_only=True)
+    password = serializers.CharField(min_length=8, required=True, write_only=True)
+    confirm_password = serializers.CharField(min_length=8, required=True, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'password', 'confirm_password')
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        confirm_password = attrs.get('confirm_password')
+        if password != confirm_password:
+            raise ValidationError(
+                {
+                    'success': False,
+                    'message': "Parollar bir biriga teng emas"
+                }
+            )
+        return attrs
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password')
+        instance.set_password(password)
+        return super(ResetPasswordSerializer, self).update(instance, validated_data)
+
 
 
 

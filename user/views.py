@@ -1,8 +1,9 @@
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status, generics
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import CreateAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from shared.utility import send_email, check_email_or_phone_num
 from .serializers import UserSignUpSerializer, VerifyCodeSerializer, ChangeUserInformation, ChangeUserPhoto, \
-    LoginSerializer, LoginRefreshSerializer, LogOutSerializer, ForgetPasswordSerializer
+    LoginSerializer, LoginRefreshSerializer, LogOutSerializer, ForgetPasswordSerializer, ResetPasswordSerializer
 from .models import User, DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -210,6 +211,31 @@ class ForgetPasswordView(APIView):
                 'user_status': user.auth_status
             },
             status=200
+        )
+
+
+class ResetPasswordView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = ResetPasswordSerializer
+    http_method_names = ['patch', 'put']
+
+    def get_queryset(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        response = super(ResetPasswordView, self).update(request, *args, **kwargs)
+        try:
+            user = User.objects.get(id=response.data.get('id'))
+        except ObjectDoesNotExist:
+            raise NotFound(detail='Bunday user topilmadi')
+
+        return Response(
+            {
+                'success': True,
+                'message': "Parolingiz muvoffaqiyatli o'zgardi!",
+                'access': user.token()['access'],
+                'refresh': user.token()['refresh_token']
+            }
         )
 
 
