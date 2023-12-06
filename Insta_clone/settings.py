@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     # my_apps
     'user',
     'shared',
-    'post'
+    'post',
 
     # install_apps
     'rest_framework',

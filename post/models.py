@@ -1,26 +1,32 @@
+from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator, MaxLengthValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
 from shared.models import BaseModel
-from user.models import User
+
+User = get_user_model()
 
 
-class Post(models.Model, BaseModel):
+class Post(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    image = models.ImageField(upload_to='post_images/', validators=[FileExtensionValidator(allowed_extensions=['jpeg', 'png', 'jpg'])])
+    image = models.ImageField(upload_to='post_images', validators=[
+        FileExtensionValidator(allowed_extensions=['jpeg', 'jpg', 'png'])])
     caption = models.TextField(validators=[MaxLengthValidator(2000)])
 
     class Meta:
-        db_table = 'posts'
-        verbose_name = 'post'
-        verbose_name_plural = 'posts'
+        db_table = "posts"
+        verbose_name = "post"
+        verbose_name_plural = "posts"
+
+    def __str__(self):
+        return f"{self.author} post about {self.caption}"
 
 
-class PostComment(models.Model, BaseModel):
+class PostComment(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    comment = models.CharField(max_length=500)
+    comment = models.TextField()
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
@@ -29,28 +35,31 @@ class PostComment(models.Model, BaseModel):
         blank=True
     )
 
+    def __str__(self):
+        return f"comment by {self.author}"
 
-class PostLike(BaseModel, models.Model):
+
+class PostLike(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
 
-    class Meta:       # cheklovlar bir marta like bosgan odam boshqa bosolmasligi haqida!
+    class Meta:
         constraints = [
-            UniqueConstraint(
-                fields=['author', 'post']
-            )
+          UniqueConstraint(
+              fields=['author', 'post'],
+              name='postLikeUnique'
+          )
         ]
 
 
-class CommentLike(models.Model, BaseModel):
+class CommentLike(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment = models.ForeignKey(PostComment, on_delete=models.CASCADE, related_name='likes')
 
-    class Meta:  # cheklovlar bir odam bir commentga bir marta like bosgan odam boshqa bosolmasligi haqida!
+    class Meta:
         constraints = [
-            UniqueConstraint(
-                fields=['author', 'comment']
-            )
+          UniqueConstraint(
+              fields=['author', 'comment'],
+              name='CommentLikeUnique'
+          )
         ]
-
-
