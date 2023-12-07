@@ -54,3 +54,29 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
             }
         )
 
+
+class PostCommentList(generics.ListAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def get_queryset(self):
+        post_id = self.kwargs['pk']
+        queryset = PostComment.objects.filter(post_id=post_id)
+        return queryset
+
+
+class PostCommentCreateApiView(generics.CreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs['pk']
+        serializer.save(author=self.request.user, post_id=post_id)
+
+
+# class CommentCreateApiView(generics.CreateAPIView):
+#     serializer_class = CommentSerializer
+#     permission_classes = (permissions.IsAuthenticated, )
+#
+#     def perform_create(self, serializer):
+#         serializer.save(author=self.request.user)
