@@ -49,7 +49,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostComment
-        fields = ('id', 'author', 'comment', 'parent', 'created_time', 'replies', 'likes_count', 'me_liked')
+        fields = ('id', 'author', 'post', 'comment', 'parent', 'created_time', 'replies', 'likes_count', 'me_liked')
         extra_kwargs = {'image': {'required': False}}
 
     def get_replies(self, obj):
