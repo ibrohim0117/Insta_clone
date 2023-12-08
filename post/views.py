@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 from rest_framework.response import Response
 
 from shared.custom_pagination import CustomPagination
-from .models import Post, PostLike, PostComment
+from .models import Post, PostLike, PostComment, CommentLike
 from .serializers import PostSerializer, PostLikeSerializer, CommentSerializer, CommentLikeSerializer
 from rest_framework import generics, permissions, status
 
@@ -92,3 +92,20 @@ class PostLikeListView(generics.ListAPIView):
     def get_queryset(self):
         post_id = self.kwargs['pk']
         return PostLike.objects.filter(post_id=post_id)
+
+
+class CommentRetrieveApiView(generics.RetrieveAPIView):
+    queryset = PostComment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = (permissions.AllowAny, )
+
+
+class CommentLikeListApiView(generics.ListAPIView):
+    serializer_class = CommentLikeSerializer
+    permission_classes = [AllowAny, ]
+
+    def get_queryset(self):
+        comment_id = self.kwargs['pk']
+        return CommentLike.objects.filter(comment_id=comment_id)
+
+
